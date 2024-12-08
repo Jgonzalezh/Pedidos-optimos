@@ -6,16 +6,20 @@ Created on Mon Dec  2 17:47:04 2024
 """
 import pandas as pd
 import matplotlib.pyplot as plt
+from prophet import Prophet
+from datetime import timedelta
 
 #parametros
 
 # Agrupar por periodo
 periodo = 1  # Puedes cambiar este valor a 7 (semana), 0.5 (medio día), 15 (dos semanas) o 30 (mes) según sea necesario
-
+forecast_days=60
 
 #data
-
-df=pd.read_csv("inventario.csv", parse_dates=['fecha y hora'])
+fecha_y_hora='fecha y hora'
+item='item'
+Q='cantidad'
+df=pd.read_csv("inventario.csv", parse_dates=[fecha_y_hora])
 import pandas as pd
 
 # Función para crear un rango de fechas completo
@@ -170,10 +174,51 @@ fruta = "Uvas"  # Elige una fruta específica
 graficar_agrupado(df, periodo, tienda, fruta)
 
 class Time_Series:
-    def __init__(self, data_csv,periodo):
+    def __init__(self, data_csv,periodo,forecast_days):
         self.data= data_csv
+        self.df=df=pd.read_csv(data_csv, parse_dates=[fecha_y_hora])
         self.periodo=periodo
-        self.agrupado=agrupar_por_periodo(self.data, self.periodo)
-    
-    
+        self.agrupado=agrupar_por_periodo(self.df, self.periodo)
+        #definir test
+        # Encontrar la fecha más antigua y la fecha más reciente 
+        self.fecha_menor = df['fecha y hora'].min() 
+        self.fecha_mayor = df['fecha y hora'].max()
+        self.diferencia_dias = (self.fecha_mayor - self.fecha_menor).days
+        self.forecast_days=forecast_days
+        if self.diferencia_dias > 3*forecast_days:
+            #print(True)
+            x = self.diferencia_dias/3*2 # Puedes cambiar este valor al número de días que desees 
+            # Calcular la nueva fecha 
+            self.fecha_end_training = self.fecha_menor + timedelta(days=x)
+        
+        
+        ####Tiene que crear diferentes nombres de fecha para los diferentes periodos que diste
+        if self.periodo==1:
+            self.fecha='fecha'
+            
+        # Crear el DataFrame df_train con las filas entre fecha_A y fecha_B 
+        self.df_train = df_agrupado[(df_agrupado[self.fecha] >= self.fecha_menor) & (df_agrupado[self.fecha] <= self.fecha_end_training)]
+        # Crear el DataFrame df_test con las filas desde fecha_B+1 día hasta fecha_C 
+        self.df_test = df_agrupado[(df_agrupado[self.fecha] > self.fecha_end_training) & (df_agrupado[self.fecha] <= self.fecha_mayor)]
+        print("DataFrame de entrenamiento (self.df_train):") 
+        print(self.df_train) 
+        print("\nDataFrame de prueba (self.df_test):") 
+        print(self.df_test)
+    def prophet (self):
+        model=Prophet()
+        df_prophet=self.df_train
+        
+        df_prophet.rename(columns={self.fecha:'ds', Q: 'y'}, inplace=True)
+        
+        print(df_prophet.columns,df_prophet.dtypes)
+        model.fit(df_prophet)
+        future = model.make_future_dataframe(self.forecast_days)
+        forecast = model.predict(future)
+        print(future.head())
+        figure = model.plot(forecast)
+        
 
+        
+ts=Time_Series("inventario.csv", periodo, forecast_days)    
+    
+ts.prophet()
