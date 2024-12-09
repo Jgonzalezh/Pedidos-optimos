@@ -101,6 +101,8 @@ print(df_agrupado)
 
 
 # Función para agrupar el DataFrame según el parámetro periodo
+
+""" creo no se ocupa
 def agrupar_por_periodo2(df, periodo):
     if periodo == 1:
         # Agrupar por tienda, por día, por item
@@ -130,7 +132,7 @@ def agrupar_por_periodo2(df, periodo):
         df_grouped = df.groupby(['tienda', 'mes', 'item'])['cantidad'].sum().reset_index()
     
     return df_grouped
-
+"""
 # Ejemplo de uso
 # Supongamos que ya tienes el DataFrame df
 # df = pd.read_csv('ruta_al_archivo.csv', parse_dates=['fecha y hora'])
@@ -161,6 +163,16 @@ def graficar_agrupado(df, periodo, tienda, fruta):
     plt.xlabel('Periodo')
     plt.ylabel('Cantidad vendida')
     plt.show()
+    
+def ag_tienda_item(df, item, tienda): 
+    """ Filtra el DataFrame según el item y la tienda proporcionados. 
+    :param df: DataFrame original con columnas 'tienda', 'fecha', 'item', 'cantidad', 'precio' 
+    :param item: El nombre del item que se quiere filtrar (string) 
+    :param tienda: El nombre de la tienda que se quiere filtrar (string) 
+    :return: DataFrame filtrado con los valores de item y tienda proporcionados """ 
+    # Filtrar el DataFrame 
+    df_filtrado = df[(df['item'] == item) & (df['tienda'] == tienda)] 
+    return df_filtrado
 
 # Ejemplo de uso
 # Supongamos que ya tienes el DataFrame df
@@ -206,7 +218,7 @@ class Time_Series:
         print(self.df_test)
     def prophet (self):
         model=Prophet()
-        df_prophet=self.df_train
+        df_prophet=ag_tienda_item(self.df_train, 'Naranjas', "Supermercado C")
         
         df_prophet.rename(columns={self.fecha:'ds', Q: 'y'}, inplace=True)
         
